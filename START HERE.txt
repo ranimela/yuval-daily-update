@@ -1,0 +1,50 @@
+NEW PROJECT FILES  (template version: see VERSION)
+
+This folder is the template. Never work inside it. For each new project:
+
+SETUP (once per project)
+1. Copy this whole folder to Projects and rename the copy to the project name.
+2. Create an empty private GitHub repo. In the copy run: git init, then add the remote.
+3. Install once on your PC: gitleaks (winget install Gitleaks.Gitleaks) and pip-audit (or use npm audit).
+   The Release Wrangler stops without gitleaks by design.
+4. Open the copy in Antigravity (File -> Open Workspace). Check that the rules in ".agents" load
+   (some builds use ".agent"). 00_router.md should be Always On.
+4b. Claude Code (first time only: run apply-claude-config.ps1 in the template, it renames dot-claude to .claude): open the copy's folder and run `claude`. Everything in ".claude" and CLAUDE.md loads by itself
+   (rules, 6 role agents, the slash commands below as skills). Check with /agents and /memory. ".agents" stays for
+   Antigravity; keep both in sync or retire one. /chaos, /build and /validate run in isolated subagents (fresh context).
+   Extra command: /architect <vision> (the Initial Architect Prompt as a command).
+5. conventions.md: either fill in the EDIT lines yourself (fastest, if you already know the stack) or leave them and the Planner asks.
+   Update README.md (name, run command) when the first feature ships.
+
+THE COMMANDS (type in the chat; each does exactly one role)
+  /pm <feature>       Full lane step 1. Questions first, then the PRD. Type "PRD approved".
+  /plan <feature>     Interview (/grill-me) then the spec. Read its 5-line summary.
+  /chaos <feature>    Only if the plan says high_risk. Use a fresh chat. Max 2 rounds.
+  /approve <feature>  Your gate. Type "Approved" and choose the review mode.
+  /build <feature>    Builds one micro-task at a time (also fixes a failed one).
+  /validate <feature> Checks the task. Use a fresh chat for the last one.
+  /ship <feature>     README, stage, secret scan, shows the combined diff. Type "Ship".
+  /quick <feature> <what>   Small change only (see below). Replaces /pm, /plan and /chaos.
+
+FULL LANE:  /pm -> /plan -> (/chaos if high_risk) -> /approve -> /build <-> /validate (repeat per task) -> /ship
+QUICK LANE: /quick -> /approve -> /build <-> /validate -> /ship
+Quick lane is only for: max 3 files, no money, personal data, auth, external writes, deletion, migration or
+overwrite of data, no new dependency, no data-contract change. The Planner will refuse and send you to /pm otherwise.
+
+REVIEW MODES (chosen at /approve)
+  validator (default): Builder runs through the tasks, Validator gates each, you review one combined diff at /ship.
+  human_per_task: you approve every diff. Use for unfamiliar or risky code.
+After 3 failed fix attempts on one task the Builder stops and reports.
+
+OPTIONAL
+  Initial Architect Prompt.txt: paste with your 2-3 sentence vision for a hard-nosed risk review before /pm.
+
+EXISTING PROJECT (adopt the template)
+  1. Copy .agents, .plans, .gitignore, .gitattributes into it (do not overwrite an existing README or .gitignore; merge).
+  2. Run gitleaks once on the whole history first: gitleaks git
+  3. Use /quick for changes and /pm only for new features.
+
+WHEN SOMETHING BREAKS
+  Add a line to .plans/lessons.md. If it repeats, put the fix in conventions.md and in the master template.
+
+Who writes what and the state-file contract: .agents/rules/00_router.md

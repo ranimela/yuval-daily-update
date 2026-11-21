@@ -1,0 +1,32 @@
+# secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# agent working output
+.qa/
+.backup/
+.plans/context-map.json
+
+# python / node
+.venv/
+venv/
+__pycache__/
+*.pyc
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# claude code local
+.claude/settings.local.json
+CLAUDE.local.md

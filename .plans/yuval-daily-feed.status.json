@@ -1,0 +1,24 @@
+{
+  "feature": "yuval-daily-feed",
+  "lane": "full",
+  "state": "shipped",
+  "high_risk": true,
+  "gate_mode": "validator",
+  "validation_mode": "host",
+  "review_rounds": 2,
+  "tasks_total": 7,
+  "tasks_done": 7,
+  "current_task": 7,
+  "fix_attempts": 0,
+  "validator_token": {
+    "result": "PASS",
+    "task": 7,
+    "timestamp": "2026-11-21T04:47:00Z",
+    "mode": "host"
+  },
+  "blocked": {
+    "by": null,
+    "reason": null,
+    "from_state": null
+  }
+}
