@@ -1,3 +1,6 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import type { FeedItem, SourceHealth } from "@/lib/contracts";
 
 interface NewsSectionProps {
@@ -5,87 +8,136 @@ interface NewsSectionProps {
   health?: SourceHealth;
 }
 
+type NewsFilter = "All" | "Israel" | "World" | "Science";
+
+function formatTimeAgo(isoDate: string): string {
+  const diffMs = Date.now() - new Date(isoDate).getTime();
+  if (!Number.isFinite(diffMs) || diffMs < 60_000) {
+    return "Just now";
+  }
+  const mins = Math.floor(diffMs / 60_000);
+  if (mins < 60) {
+    return `${mins}m ago`;
+  }
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) {
+    return `${hours}h ago`;
+  }
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
+
+function matchesNewsFilter(item: FeedItem, filter: NewsFilter): boolean {
+  if (filter === "All") {
+    return true;
+  }
+  const text = `${item.title} ${item.summary}`;
+  if (filter === "Israel") {
+    return /ישראל|צה"ל|ירושלים|תל אביב|ממשלה|כנסת|רמאללה|עזה|צפון|התנחלות/i.test(text);
+  }
+  if (filter === "Science") {
+    return /מדע|טכנולוג|שבב|אנבידיה|חלל|מחקר|בינה|רפואה|אקלים|פיזיקה/i.test(text);
+  }
+  return !/ישראל|צה"ל|ירושלים|תל אביב|ממשלה|כנסת/i.test(text);
+}
+
 export const NewsSection = ({ items, health }: NewsSectionProps) => {
+  const [filter, setFilter] = useState<NewsFilter>("All");
   const isFailed = health?.status === "failed";
 
+  const visibleItems = useMemo(
+    () => items.filter((item) => matchesNewsFilter(item, filter)).slice(0, 5),
+    [items, filter]
+  );
+
   return (
-    <section
-      dir="rtl"
-      lang="he"
-      aria-labelledby="news-heading"
-      className="space-y-6 font-hebrew"
-    >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <span className="inline-block rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-800">
-            עדכון שוטף · הארץ
-          </span>
-          <h2 id="news-heading" className="mt-2 font-headline text-3xl font-bold text-gray-900">
-            News update · עדכוני חדשות
-          </h2>
-        </div>
-        {health?.lastSuccessAt ? (
-          <span dir="ltr" className="font-mono text-xs text-gray-500">
-            Updated {new Date(health.lastSuccessAt).toLocaleTimeString("en-GB", {
-              timeZone: "Asia/Jerusalem",
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </span>
-        ) : null}
+    <section id="news" aria-labelledby="news-heading" className="cartoon-card scroll-mt-4">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b-4 border-ink bg-dose-red px-4 py-3">
+        <h2
+          id="news-heading"
+          className="font-headline text-[28px] font-normal uppercase leading-none tracking-[1px] text-ink"
+        >
+          NEWS FEED
+        </h2>
+        <span className="inline-flex items-center rounded-full bg-ink px-3 py-0.5 text-[14px] font-extrabold uppercase text-white">
+          {visibleItems.length} {visibleItems.length === 1 ? "STORY" : "STORIES"}
+        </span>
       </div>
 
-      {isFailed ? (
-        <div
-          role="status"
-          className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900"
-        >
-          עדכוני החדשות אינם זמינים זמנית (News temporarily unavailable).{" "}
-          {items.length > 0 ? "מוצגות הכותרות השמורות האחרונות." : ""}
+      <div className="flex flex-col gap-3.5 p-4">
+        <div className="flex flex-wrap gap-2">
+          {(["All", "Israel", "World", "Science"] as NewsFilter[]).map((chip) => {
+            const isActive = filter === chip;
+            return (
+              <button
+                key={chip}
+                type="button"
+                aria-pressed={isActive}
+                onClick={() => setFilter(chip)}
+                className={`cartoon-tab-chip min-h-[44px] flex-none px-4 text-sm font-extrabold transition active:translate-x-[1px] active:translate-y-[1px] ${
+                  isActive ? "bg-ink text-white" : "bg-white text-ink hover:bg-dose-red/20"
+                }`}
+              >
+                {chip}
+              </button>
+            );
+          })}
         </div>
-      ) : null}
 
-      {items.length === 0 ? (
-        <div className="glass-panel rounded-2xl p-6 text-sm text-gray-600">
-          אין כרגע עדכוני חדשות להצגה.
-        </div>
-      ) : (
-        <ul className="glass-panel divide-y divide-gray-200 overflow-hidden rounded-2xl">
-          {items.map((item) => (
-            <li
-              key={item.id}
-              className="px-5 py-4 transition duration-150 hover:bg-surface-muted/80"
-            >
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h3 className="text-base font-bold text-gray-900">
-                  {item.externalUrl ? (
-                    <a
-                      href={item.externalUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:text-secondary hover:underline"
-                    >
-                      {item.title}
-                    </a>
-                  ) : (
-                    item.title
-                  )}
+        {isFailed ? (
+          <div
+            role="status"
+            className="cartoon-inner bg-dose-yellow/60 px-3 py-2 text-sm font-bold text-ink"
+          >
+            Could not load latest news. {items.length > 0 ? "Showing cached stories." : ""}
+          </div>
+        ) : null}
+
+        {visibleItems.length === 0 ? (
+          <div className="rounded-[14px] border-2 border-dashed border-ink/40 p-4 text-sm font-semibold text-ink">
+            No stories match this filter right now. Try <strong>All</strong>.
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3.5">
+            {visibleItems.map((item) => (
+              <article
+                key={item.id}
+                className="cartoon-inner flex flex-col gap-1.5 bg-[#f7f7f7] p-3"
+              >
+                <div className="flex items-center justify-between gap-2 text-[13px] font-extrabold">
+                  <span className="inline-flex items-center rounded-full border-2 border-ink bg-dose-yellow px-2.5 py-0 text-ink">
+                    {item.sourceLabel}
+                  </span>
+                  <span className="text-ink/75">{formatTimeAgo(item.publishedAt)}</span>
+                </div>
+
+                <h3
+                  dir={item.direction}
+                  lang={item.language}
+                  className="m-0 break-words font-hebrew text-[18px] font-extrabold leading-[1.25] text-ink"
+                >
+                  {item.title}
                 </h3>
-                <span dir="ltr" className="font-mono text-xs text-gray-500">
-                  {new Date(item.publishedAt).toLocaleTimeString("en-GB", {
-                    timeZone: "Asia/Jerusalem",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
-              </div>
-              {item.summary && item.summary !== item.title ? (
-                <p className="mt-1.5 text-sm leading-relaxed text-gray-700">{item.summary}</p>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      )}
+
+                {item.externalUrl ? (
+                  <a
+                    href={item.externalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-[44px] items-center text-[15px] font-extrabold text-ink underline decoration-2 underline-offset-4 hover:text-[#333]"
+                  >
+                    Read the story
+                  </a>
+                ) : null}
+              </article>
+            ))}
+          </div>
+        )}
+
+        <p className="m-0 text-[13px] font-semibold text-ink/80">
+          Sources are picked by a parent. Kid-appropriate feeds only.
+        </p>
+      </div>
     </section>
   );
 };

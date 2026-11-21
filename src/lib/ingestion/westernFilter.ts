@@ -1,3 +1,71 @@
+const PRIORITY_TOPIC_KEYWORDS = [
+  // WW1
+  "world war i",
+  "first world war",
+  "great war",
+  "ww1",
+  "wwi",
+  "somme",
+  "verdun",
+  "gallipoli",
+  "armistice",
+  "archduke franz ferdinand",
+  "treaty of versailles",
+  // WW2
+  "world war ii",
+  "second world war",
+  "ww2",
+  "wwii",
+  "normandy",
+  "d-day",
+  "stalingrad",
+  "dunkirk",
+  "pearl harbor",
+  "battle of britain",
+  "midway",
+  "el alamein",
+  "hiroshima",
+  "nagasaki",
+  "holocaust",
+  "auschwitz",
+  "warsaw ghetto",
+  "churchill",
+  "eisenhower",
+  "patton",
+  "rommel",
+  "blitzkrieg",
+  "allied forces",
+  "axis powers",
+  // Roman Empire
+  "roman empire",
+  "roman republic",
+  "ancient rome",
+  "roman",
+  "julius caesar",
+  "augustus",
+  "constantine",
+  "hadrian",
+  "trajan",
+  "marcus aurelius",
+  "nero",
+  "pompeii",
+  "colosseum",
+  "rubicon",
+  "punic war",
+  "hannibal",
+  "byzantine",
+  // Napoleon
+  "napoleon",
+  "napoleonic",
+  "bonaparte",
+  "waterloo",
+  "austerlitz",
+  "trafalgar",
+  "borodino",
+  "marengo",
+  "jena",
+];
+
 const WESTERN_HISTORY_KEYWORDS = [
   // Israel & Jewish history
   "israel",
@@ -45,10 +113,8 @@ const WESTERN_HISTORY_KEYWORDS = [
   "kennedy",
   "jefferson",
   "franklin",
-  "eisenhower",
   "truman",
   "moon landing",
-  "pearl harbor",
   "gettysburg",
   // Europe & Western Civilization
   "europe",
@@ -66,7 +132,6 @@ const WESTERN_HISTORY_KEYWORDS = [
   "french",
   "paris",
   "versailles",
-  "napoleon",
   "germany",
   "german",
   "berlin",
@@ -75,7 +140,6 @@ const WESTERN_HISTORY_KEYWORDS = [
   "italy",
   "italian",
   "rome",
-  "roman",
   "venice",
   "florence",
   "vatican",
@@ -122,10 +186,6 @@ const WESTERN_HISTORY_KEYWORDS = [
   "reformation",
   "enlightenment",
   "industrial revolution",
-  "normandy",
-  "d-day",
-  "waterloo",
-  "churchill",
   "shakespeare",
   "galileo",
   "newton",
@@ -135,17 +195,42 @@ const WESTERN_HISTORY_KEYWORDS = [
   "gutenberg",
 ];
 
-const KEYWORD_PATTERNS = WESTERN_HISTORY_KEYWORDS.map((kw) => {
-  const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(`\\b${escaped}\\b`, "i");
-});
+function compilePatterns(keywords: string[]): RegExp[] {
+  return keywords.map((kw) => {
+    const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`\\b${escaped}\\b`, "i");
+  });
+}
+
+const PRIORITY_PATTERNS = compilePatterns(PRIORITY_TOPIC_KEYWORDS);
+const WESTERN_PATTERNS = compilePatterns(WESTERN_HISTORY_KEYWORDS);
+
+/**
+ * Score an event: 2 for WW1/WW2/Roman Empire/Napoleon, 1 for Europe/US/Israel, 0 otherwise.
+ */
+export function getWesternHistoryPriority(text: string, year?: number | null): number {
+  if (!text) {
+    return 0;
+  }
+  const isPriorityYear =
+    year !== null &&
+    year !== undefined &&
+    ((year >= 1914 && year <= 1918) || (year >= 1939 && year <= 1945));
+  if (PRIORITY_PATTERNS.some((pattern) => pattern.test(text))) {
+    return 2;
+  }
+  if (isPriorityYear && WESTERN_PATTERNS.some((pattern) => pattern.test(text))) {
+    return 2;
+  }
+  if (WESTERN_PATTERNS.some((pattern) => pattern.test(text))) {
+    return 1;
+  }
+  return 0;
+}
 
 /**
  * Return true when an event description matches Europe, US, or Israel history keywords.
  */
-export function isWesternHistory(text: string): boolean {
-  if (!text) {
-    return false;
-  }
-  return KEYWORD_PATTERNS.some((pattern) => pattern.test(text));
+export function isWesternHistory(text: string, year?: number | null): boolean {
+  return getWesternHistoryPriority(text, year) > 0;
 }

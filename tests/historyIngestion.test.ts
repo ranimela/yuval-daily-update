@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { SqlClient } from "@/lib/db/client";
 import { ingestHistoryEvents } from "@/lib/ingestion/history";
-import { isWesternHistory } from "@/lib/ingestion/westernFilter";
+import { getWesternHistoryPriority, isWesternHistory } from "@/lib/ingestion/westernFilter";
 
 function createMockSql() {
   const queries: string[] = [];
@@ -17,11 +17,15 @@ describe("western history filter & ingestion", () => {
     vi.restoreAllMocks();
   });
 
-  it("matches Europe, US, and Israel events and excludes unrelated regions", () => {
+  it("matches Europe, US, and Israel events and prioritizes WW1/WW2/Roman/Napoleon", () => {
     expect(isWesternHistory("The State of Israel declares independence in Tel Aviv.")).toBe(true);
     expect(isWesternHistory("United States Apollo 11 lands on the Moon.")).toBe(true);
     expect(isWesternHistory("Treaty signed in Paris, France.")).toBe(true);
     expect(isWesternHistory("Ming dynasty emperor ascends the throne in Beijing.")).toBe(false);
+    expect(getWesternHistoryPriority("Napoleon wins the Battle of Austerlitz.")).toBe(2);
+    expect(getWesternHistoryPriority("Roman Empire builds aqueducts.")).toBe(2);
+    expect(getWesternHistoryPriority("Allied forces land at Normandy in WW2.")).toBe(2);
+    expect(getWesternHistoryPriority("Congress opens new bridge in Boston.")).toBe(1);
   });
 
   it("handles partial source failure via Promise.allSettled and caps at 10 items", async () => {
@@ -40,6 +44,20 @@ describe("western history filter & ingestion", () => {
       const url = String(input);
       if (url.includes("wikipedia.org")) {
         return new Response(JSON.stringify({ selected: wikiEvents }), { status: 200 });
+      }
+      if (url.includes("byabbe.se")) {
+        return new Response(
+          JSON.stringify({
+            events: [
+              {
+                year: "164 BC",
+                description: "Judas Maccabeus restores the Temple in Jerusalem.",
+                wikipedia: [{ title: "Hanukkah", wikipedia: "https://en.wikipedia.org/wiki/Hanukkah" }],
+              },
+            ],
+          }),
+          { status: 200 }
+        );
       }
       return new Response("Forbidden", { status: 403 });
     });

@@ -5,7 +5,9 @@ import {
   recordSourceHealth,
   upsertFeedItems,
 } from "@/lib/db/repository";
-import { isWesternHistory } from "@/lib/ingestion/westernFilter";
+import {
+  getWesternHistoryPriority,
+} from "@/lib/ingestion/westernFilter";
 import { logEvent } from "@/lib/logger";
 import { sanitizeHttpUrl, sanitizePlainText, sha256Hex } from "@/lib/sanitize";
 
@@ -18,7 +20,7 @@ export interface JerusalemDateParts {
 }
 
 interface RawHistoryCandidate {
-  sourceId: "wikimedia" | "zenquotes";
+  sourceId: "wikimedia" | "byabbe" | "zenquotes";
   sourceLabel: string;
   canonicalKey: string;
   title: string;
@@ -55,7 +57,7 @@ async function fetchWikimediaCandidates(
   day: string,
   timeoutMs: number
 ): Promise<RawHistoryCandidate[]> {
-  const url = `https://en.wikipedia.org/api/rest_v1/feed/onthisday/selected/${month}/${day}`;
+  const url = `https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/${month}/${day}`;
   const res = await fetch(url, {
     headers: {
       Accept: "application/json",
@@ -68,6 +70,14 @@ async function fetchWikimediaCandidates(
     throw new Error(`Wikimedia HTTP ${res.status}`);
   }
   const data = (await res.json()) as {
+    events?: Array<{
+      text?: unknown;
+      year?: unknown;
+      pages?: Array<{
+        title?: unknown;
+        content_urls?: { desktop?: { page?: unknown } };
+      }>;
+    }>;
     selected?: Array<{
       text?: unknown;
       year?: unknown;
@@ -77,12 +87,13 @@ async function fetchWikimediaCandidates(
       }>;
     }>;
   };
-  if (!Array.isArray(data?.selected)) {
-    throw new Error("Wikimedia response missing selected array");
+  const entries = Array.isArray(data?.events) ? data.events : data?.selected;
+  if (!Array.isArray(entries)) {
+    throw new Error("Wikimedia response missing events/selected array");
   }
 
   const out: RawHistoryCandidate[] = [];
-  for (const entry of data.selected) {
+  for (const entry of entries) {
     const rawText = typeof entry.text === "string" ? entry.text : "";
     const summary = sanitizePlainText(rawText, 500);
     if (!summary) {
@@ -172,8 +183,81 @@ async function fetchZenQuotesCandidates(
   return out;
 }
 
+function parseYearString(rawYear: unknown): number | null {
+  if (typeof rawYear === "number" && Number.isFinite(rawYear)) {
+    return rawYear;
+  }
+  if (typeof rawYear !== "string") {
+    return null;
+  }
+  const trimmed = rawYear.trim();
+  const bcMatch = trimmed.match(/^(\d+)\s*BC$/i);
+  if (bcMatch) {
+    return -Number.parseInt(bcMatch[1], 10);
+  }
+  const num = Number.parseInt(trimmed, 10);
+  return Number.isFinite(num) ? num : null;
+}
+
+async function fetchByabbeCandidates(
+  monthNum: number,
+  dayNum: number,
+  timeoutMs: number
+): Promise<RawHistoryCandidate[]> {
+  const url = `https://byabbe.se/on-this-day/${monthNum}/${dayNum}/events.json`;
+  const res = await fetch(url, {
+    headers: {
+      Accept: "application/json",
+      "User-Agent": "YuvalDailyUpdate/1.0 (https://yuval.melameds.net)",
+    },
+    signal: AbortSignal.timeout(timeoutMs),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error(`byabbe HTTP ${res.status}`);
+  }
+  const data = (await res.json()) as {
+    events?: Array<{
+      year?: unknown;
+      description?: unknown;
+      wikipedia?: Array<{ title?: unknown; wikipedia?: unknown }>;
+    }>;
+  };
+  if (!Array.isArray(data?.events)) {
+    throw new Error("byabbe response missing events array");
+  }
+
+  const out: RawHistoryCandidate[] = [];
+  for (const entry of data.events) {
+    const rawDesc = typeof entry.description === "string" ? entry.description : "";
+    const summary = sanitizePlainText(rawDesc, 500);
+    if (!summary) {
+      continue;
+    }
+    const year = parseYearString(entry.year);
+    const firstWiki = Array.isArray(entry.wikipedia) ? entry.wikipedia[0] : undefined;
+    const title =
+      typeof firstWiki?.title === "string"
+        ? sanitizePlainText(firstWiki.title, 240)
+        : sanitizePlainText(summary, 120);
+    const externalUrl = sanitizeHttpUrl(
+      typeof firstWiki?.wikipedia === "string" ? firstWiki.wikipedia : null
+    );
+    out.push({
+      sourceId: "byabbe",
+      sourceLabel: "Wikipedia",
+      canonicalKey: `${year ?? "na"}:${summary.slice(0, 80)}`,
+      title,
+      summary,
+      externalUrl,
+      year,
+    });
+  }
+  return out;
+}
+
 /**
- * Ingest ~10 Western-history items for today's Asia/Jerusalem editionDate from Wikimedia & ZenQuotes.
+ * Ingest ~10 Western-history items for today's Asia/Jerusalem editionDate from Wikimedia, byabbe.se & ZenQuotes.
  */
 export async function ingestHistoryEvents(
   sql: SqlClient,
@@ -183,8 +267,9 @@ export async function ingestHistoryEvents(
   const limit = options.limit ?? 10;
   const { editionDate, month, day, monthNum, dayNum } = getJerusalemDateParts(options.now);
 
-  const [wikiResult, zenResult] = await Promise.allSettled([
+  const [wikiResult, byabbeResult, zenResult] = await Promise.allSettled([
     fetchWikimediaCandidates(month, day, timeoutMs),
+    fetchByabbeCandidates(monthNum, dayNum, timeoutMs),
     fetchZenQuotesCandidates(monthNum, dayNum, timeoutMs),
   ]);
 
@@ -204,6 +289,19 @@ export async function ingestHistoryEvents(
     );
   }
 
+  if (byabbeResult.status === "fulfilled") {
+    candidates.push(...byabbeResult.value);
+  } else {
+    const msg = byabbeResult.reason instanceof Error ? byabbeResult.reason.message : String(byabbeResult.reason);
+    errors.push(`byabbe: ${msg}`);
+    logEvent(
+      "warn",
+      "byabbe.se history fetch failed",
+      { correlationId: options.correlationId, module: "ingestion/history" },
+      byabbeResult.reason
+    );
+  }
+
   if (zenResult.status === "fulfilled") {
     candidates.push(...zenResult.value);
   } else {
@@ -217,7 +315,11 @@ export async function ingestHistoryEvents(
     );
   }
 
-  if (wikiResult.status === "rejected" && zenResult.status === "rejected") {
+  if (
+    wikiResult.status === "rejected" &&
+    byabbeResult.status === "rejected" &&
+    zenResult.status === "rejected"
+  ) {
     await recordSourceHealth(sql, {
       sourceId: "history_combined",
       category: "history_events",
@@ -228,9 +330,13 @@ export async function ingestHistoryEvents(
   }
 
   const seenKeys = new Set<string>();
-  const filtered: RawHistoryCandidate[] = [];
+  const scored: Array<{ candidate: RawHistoryCandidate; priority: number }> = [];
   for (const candidate of candidates) {
-    if (!isWesternHistory(`${candidate.title} ${candidate.summary}`)) {
+    const priority = getWesternHistoryPriority(
+      `${candidate.title} ${candidate.summary}`,
+      candidate.year
+    );
+    if (priority === 0) {
       continue;
     }
     const dedupeKey = `${candidate.year ?? "na"}:${candidate.summary.slice(0, 48).toLowerCase()}`;
@@ -238,11 +344,11 @@ export async function ingestHistoryEvents(
       continue;
     }
     seenKeys.add(dedupeKey);
-    filtered.push(candidate);
-    if (filtered.length >= limit) {
-      break;
-    }
+    scored.push({ candidate, priority });
   }
+
+  scored.sort((a, b) => b.priority - a.priority);
+  const filtered = scored.slice(0, limit).map((entry) => entry.candidate);
 
   const nowIso = new Date().toISOString();
   const items: FeedItem[] = await Promise.all(

@@ -6,8 +6,7 @@ import { logEvent } from "@/lib/logger";
 import { sanitizeHttpUrl, sanitizePlainText, sha256Hex } from "@/lib/sanitize";
 
 const DEFAULT_HAARETZ_RSS_URLS = [
-  "https://www.haaretz.co.il/srv/haaretz-latest-rss",
-  "https://www.haaretz.co.il/cmlink/1.1617539",
+  "https://www.haaretz.co.il/srv/htz---all-articles",
 ];
 
 function unwrapCdata(value: string): string {

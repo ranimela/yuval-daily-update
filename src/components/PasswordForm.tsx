@@ -39,7 +39,7 @@ export const PasswordForm = () => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="password-input" className="mb-1.5 block text-sm font-medium text-gray-800">
+        <label htmlFor="password-input" className="mb-1.5 block text-sm font-extrabold text-ink">
           Password
         </label>
         <input
@@ -50,16 +50,16 @@ export const PasswordForm = () => {
           required
           autoFocus
           placeholder="Enter password"
-          className={`h-10 w-full rounded-lg border px-3 text-sm outline-none transition ${
+          className={`min-h-[48px] w-full rounded-[14px] border-[3px] px-3.5 text-[16px] font-bold text-ink outline-none transition ${
             error
-              ? "border-status-error bg-red-50 focus:ring-2 focus:ring-status-error/20"
-              : "border-gray-300 bg-white hover:border-gray-400 focus:border-secondary focus:ring-2 focus:ring-secondary/30"
+              ? "border-dose-red bg-red-50 focus:ring-4 focus:ring-dose-red/30"
+              : "border-ink bg-white focus:ring-4 focus:ring-dose-yellow/60"
           }`}
         />
       </div>
 
       {error ? (
-        <p role="alert" className="text-sm font-medium text-status-error">
+        <p role="alert" className="text-sm font-extrabold text-dose-red">
           {error}
         </p>
       ) : null}
@@ -67,9 +67,9 @@ export const PasswordForm = () => {
       <button
         type="submit"
         disabled={submitting}
-        className="h-11 w-full rounded-lg bg-primary px-6 font-headline text-sm font-semibold text-white shadow-accent transition duration-150 hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-40"
+        className="cartoon-pill min-h-[48px] w-full bg-dose-yellow px-6 font-headline text-lg uppercase tracking-wide text-ink transition active:translate-x-[1px] active:translate-y-[1px] disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {submitting ? "Checking..." : "Unlock Daily Update"}
+        {submitting ? "Checking..." : "Open Daily Dose"}
       </button>
     </form>
   );

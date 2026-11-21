@@ -20,6 +20,8 @@ node_modules/
 .next/
 out/
 *.tsbuildinfo
+.vercel/
+.neon/
 
 # OS / editor
 .DS_Store
@@ -30,3 +32,7 @@ Thumbs.db
 # claude code local
 .claude/settings.local.json
 CLAUDE.local.md
+.neon
+
+.vercel
+.env*

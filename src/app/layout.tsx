@@ -1,34 +1,28 @@
 import type { Metadata } from "next";
-import { DM_Sans, Fira_Code, Heebo, Poppins } from "next/font/google";
+import { Heebo, Lilita_One, Nunito } from "next/font/google";
 import "./globals.css";
 
-const poppins = Poppins({
+const lilitaOne = Lilita_One({
   subsets: ["latin"],
-  weight: ["600", "700", "800"],
-  variable: "--font-poppins",
+  weight: ["400"],
+  variable: "--font-lilita",
 });
 
-const dmSans = DM_Sans({
+const nunito = Nunito({
   subsets: ["latin"],
-  weight: ["400", "500", "700"],
-  variable: "--font-dm-sans",
+  weight: ["600", "700", "800"],
+  variable: "--font-nunito",
 });
 
 const heebo = Heebo({
   subsets: ["hebrew", "latin"],
-  weight: ["400", "500", "700"],
+  weight: ["500", "700", "800"],
   variable: "--font-heebo",
 });
 
-const firaCode = Fira_Code({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-fira-code",
-});
-
 export const metadata: Metadata = {
-  title: "Yuval Daily Update",
-  description: "Daily history & news digest for Yuval",
+  title: "Daily Dose for Yuval",
+  description: "Four things to get your brain going.",
   robots: { index: false, follow: false },
 };
 
@@ -40,9 +34,9 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${poppins.variable} ${dmSans.variable} ${heebo.variable} ${firaCode.variable}`}
+      className={`${lilitaOne.variable} ${nunito.variable} ${heebo.variable}`}
     >
-      <body className="min-h-screen bg-surface-base font-body text-gray-900 antialiased">
+      <body className="min-h-screen bg-sky font-body text-[16px] font-semibold leading-[1.45] text-ink antialiased">
         {children}
       </body>
     </html>
