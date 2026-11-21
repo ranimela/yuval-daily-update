@@ -1,5 +1,5 @@
 export interface DailyTerm {
-  category: "Math" | "Statistics" | "Technology";
+  category: "Math" | "Stats" | "Tech";
   term: string;
   definition: string;
   example: string;
@@ -15,17 +15,22 @@ export interface DailyThinkPrompt {
   deeperUrl: string;
 }
 
+export interface DailyExcuse {
+  category: string;
+  text: string;
+}
+
 const TERMS: DailyTerm[] = [
   {
-    category: "Statistics",
+    category: "Stats",
     term: "Median",
-    definition: "The middle number when values are lined up smallest to largest.",
-    example: "Scores 3, 7, 9, 12, 100 give median 9, average 26.2.",
-    whyItMatters: "The median ignores extreme values, so income reports use it.",
+    definition: "The middle number when you line up all the values from smallest to largest.",
+    example: "Test scores: 3, 7, 9, 12, 100 — Median: 9 (Average: 26.2, dragged up by 100).",
+    whyItMatters: "The median ignores extreme values, so reports on things like income use it.",
     detailUrl: "https://en.wikipedia.org/wiki/Median",
   },
   {
-    category: "Technology",
+    category: "Tech",
     term: "Latency",
     definition: "The delay between sending a request and getting the first response back.",
     example: "Pressing a game button and seeing your character jump 40ms later.",
@@ -41,7 +46,7 @@ const TERMS: DailyTerm[] = [
     detailUrl: "https://en.wikipedia.org/wiki/Exponentiation",
   },
   {
-    category: "Technology",
+    category: "Tech",
     term: "Algorithm",
     definition: "A clear step-by-step recipe a computer follows to solve a problem.",
     example: "Binary search finds a word in a dictionary by splitting it in half each step.",
@@ -49,7 +54,7 @@ const TERMS: DailyTerm[] = [
     detailUrl: "https://en.wikipedia.org/wiki/Algorithm",
   },
   {
-    category: "Statistics",
+    category: "Stats",
     term: "Outlier",
     definition: "A data point that sits far away from all the other numbers in a group.",
     example: "In heights 142, 145, 147, 148, and 210 cm, 210 cm is the outlier.",
@@ -62,10 +67,10 @@ const THINK_PROMPTS: DailyThinkPrompt[] = [
   {
     title: "The Ship of Theseus",
     question:
-      "If you replace every wooden plank on a ship one at a time until none of the original planks remain, is it still the same ship?",
+      "Replace the planks of a ship one at a time until every plank is new. Is it still the same ship?",
     twoWays: [
-      "Same ship: it kept its continuous shape, name, and job.",
-      "Different ship: zero original parts are left.",
+      "Same ship: it kept its shape and its job.",
+      "Different ship: none of the original parts are left.",
     ],
     deeperLabel: "Stanford Encyclopedia of Philosophy",
     deeperUrl: "https://plato.stanford.edu/entries/identity-time/",
@@ -84,13 +89,44 @@ const THINK_PROMPTS: DailyThinkPrompt[] = [
   {
     title: "The Library of Babel",
     question:
-      "If a library held every possible combination of letters—meaning every true fact AND every false rumor—would that library be useful?",
+      "If a library held every possible combination of letters—every true fact AND every false rumor—would it be useful?",
     twoWays: [
       "Amazing: every answer in the universe is already written inside it.",
       "Useless: finding one true sentence among endless nonsense is impossible without a filter.",
     ],
     deeperLabel: "Stanford Encyclopedia of Philosophy",
     deeperUrl: "https://plato.stanford.edu/entries/epistemology/",
+  },
+];
+
+const USELESS_FACTS: string[] = [
+  "A group of flamingos is called a flamboyance.",
+  "Octopuses have three hearts, and two of them stop beating when they swim.",
+  "Bananas are berries, while strawberries are not.",
+  "Honey never spoils—jars found in ancient Egyptian tombs are still edible.",
+  "Wombat poop is cube-shaped so it doesn't roll away on rocks.",
+];
+
+const SILLY_EXCUSES: DailyExcuse[] = [
+  {
+    category: "Homework",
+    text: "My homework was abducted by a very organized squirrel.",
+  },
+  {
+    category: "Chores",
+    text: "I tried to clean my room, but the gravity was unusually strong near my bed.",
+  },
+  {
+    category: "School",
+    text: "My backpack entered airplane mode and refused to unzip until noon.",
+  },
+  {
+    category: "Bedtime",
+    text: "I wasn't stalling—I was conducting a scientific study on ceiling shadows.",
+  },
+  {
+    category: "Sports",
+    text: "The soccer ball clearly curved on purpose to avoid my left shoe.",
   },
 ];
 
@@ -108,4 +144,12 @@ export function getDailyTerm(editionDate: string): DailyTerm {
 
 export function getDailyThinkPrompt(editionDate: string): DailyThinkPrompt {
   return THINK_PROMPTS[getDaySeed(editionDate) % THINK_PROMPTS.length];
+}
+
+export function getDailyUselessFact(editionDate: string): string {
+  return USELESS_FACTS[getDaySeed(editionDate) % USELESS_FACTS.length];
+}
+
+export function getDailyExcuse(editionDate: string): DailyExcuse {
+  return SILLY_EXCUSES[getDaySeed(editionDate) % SILLY_EXCUSES.length];
 }

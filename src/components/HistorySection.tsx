@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { HourglassIcon } from "@/components/SectionIcons";
 import type { FeedItem, SourceHealth } from "@/lib/contracts";
 
 interface HistorySectionProps {
@@ -56,13 +57,18 @@ export const HistorySection = ({ items, health, editionDate }: HistorySectionPro
       aria-labelledby="history-heading"
       className="cartoon-card scroll-mt-4"
     >
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b-4 border-ink bg-dose-orange px-4 py-3">
-        <h2
-          id="history-heading"
-          className="font-headline text-[28px] font-normal uppercase leading-none tracking-[1px] text-ink"
-        >
-          TODAY IN HISTORY
-        </h2>
+      <div className="bg-halftone flex flex-wrap items-center justify-between gap-2 border-b-4 border-ink bg-dose-orange p-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full border-[3px] border-ink bg-white">
+            <HourglassIcon size={20} />
+          </span>
+          <h2
+            id="history-heading"
+            className="m-0 font-headline text-[25px] font-normal uppercase leading-none tracking-[1px] text-ink"
+          >
+            TODAY IN HISTORY
+          </h2>
+        </div>
         <span className="inline-flex items-center rounded-full bg-ink px-3 py-0.5 text-[14px] font-extrabold uppercase text-dose-yellow">
           {shortDate}
         </span>
@@ -115,7 +121,7 @@ export const HistorySection = ({ items, health, editionDate }: HistorySectionPro
               <li key={item.id} className="flex flex-col gap-3.5">
                 {idx > 0 ? <hr className="h-0 border-0 border-t-[3px] border-dashed border-ink" /> : null}
                 <div className="flex items-start gap-3">
-                  <span className="inline-flex shrink-0 items-center rounded-[12px] bg-ink px-2.5 py-1 font-headline text-[22px] leading-none text-dose-yellow">
+                  <span className="inline-flex shrink-0 -rotate-2 items-center rounded-[12px] bg-ink px-2.5 py-1 font-headline text-[22px] leading-none text-dose-yellow shadow-year">
                     {item.year ?? "—"}
                   </span>
                   <div className="min-w-0 flex-1">

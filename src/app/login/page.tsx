@@ -2,7 +2,7 @@ import { PasswordForm } from "@/components/PasswordForm";
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-sky px-4 py-8">
+    <main className="bg-sky-dots flex min-h-screen items-center justify-center px-4 py-8">
       <section className="cartoon-card w-full max-w-[420px]">
         <div className="border-b-4 border-ink bg-dose-yellow px-5 py-4">
           <div className="-rotate-1 inline-block">

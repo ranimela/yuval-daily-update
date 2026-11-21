@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { NewspaperIcon } from "@/components/SectionIcons";
 import type { FeedItem, SourceHealth } from "@/lib/contracts";
 
 interface NewsSectionProps {
@@ -52,13 +53,18 @@ export const NewsSection = ({ items, health }: NewsSectionProps) => {
 
   return (
     <section id="news" aria-labelledby="news-heading" className="cartoon-card scroll-mt-4">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b-4 border-ink bg-dose-red px-4 py-3">
-        <h2
-          id="news-heading"
-          className="font-headline text-[28px] font-normal uppercase leading-none tracking-[1px] text-ink"
-        >
-          NEWS FEED
-        </h2>
+      <div className="bg-halftone flex flex-wrap items-center justify-between gap-2 border-b-4 border-ink bg-dose-red p-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full border-[3px] border-ink bg-white">
+            <NewspaperIcon size={20} />
+          </span>
+          <h2
+            id="news-heading"
+            className="m-0 font-headline text-[25px] font-normal uppercase leading-none tracking-[1px] text-ink"
+          >
+            NEWS FEED
+          </h2>
+        </div>
         <span className="inline-flex items-center rounded-full bg-ink px-3 py-0.5 text-[14px] font-extrabold uppercase text-white">
           {visibleItems.length} {visibleItems.length === 1 ? "STORY" : "STORIES"}
         </span>
@@ -99,16 +105,19 @@ export const NewsSection = ({ items, health }: NewsSectionProps) => {
           </div>
         ) : (
           <div className="flex flex-col gap-3.5">
-            {visibleItems.map((item) => (
+            {visibleItems.map((item, idx) => (
               <article
                 key={item.id}
-                className="cartoon-inner flex flex-col gap-1.5 bg-[#f7f7f7] p-3"
+                className="cartoon-inner flex flex-col gap-1.5 bg-[#f7f7f7] p-3 shadow-inner"
               >
-                <div className="flex items-center justify-between gap-2 text-[13px] font-extrabold">
+                <div className="flex items-center gap-2 text-[13px] font-extrabold">
+                  <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-ink font-headline text-[17px] font-normal text-dose-yellow">
+                    {idx + 1}
+                  </span>
                   <span className="inline-flex items-center rounded-full border-2 border-ink bg-dose-yellow px-2.5 py-0 text-ink">
                     {item.sourceLabel}
                   </span>
-                  <span className="text-ink/75">{formatTimeAgo(item.publishedAt)}</span>
+                  <span className="ml-auto text-ink/75">{formatTimeAgo(item.publishedAt)}</span>
                 </div>
 
                 <h3
