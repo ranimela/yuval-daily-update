@@ -83,8 +83,8 @@ const THINK_PROMPTS: DailyThinkPrompt[] = [
       "Yes: doing the right thing matters even when nobody watches.",
       "Harder than it looks: rules often rely on people knowing they might be caught.",
     ],
-    deeperLabel: "Internet Encyclopedia of Philosophy",
-    deeperUrl: "https://iep.utm.edu/plato/",
+    deeperLabel: "Wikipedia: Ring of Gyges",
+    deeperUrl: "https://en.wikipedia.org/wiki/Ring_of_Gyges",
   },
   {
     title: "The Library of Babel",
