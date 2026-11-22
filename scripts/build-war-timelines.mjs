@@ -19,7 +19,7 @@ const MONTHS = {
 const MONTH_RE =
   "(January|February|March|April|May|June|July|August|September|October|November|December)";
 
-function stripHtml(input) {
+function stripHtmlLine(input) {
   return input
     .replace(/<sup[^>]*>[\s\S]*?<\/sup>/gi, "")
     .replace(/<[^>]+>/g, " ")
@@ -46,7 +46,7 @@ async function fetchWikiHtml(title) {
 function extractEntries(html, defaultYear) {
   const out = {};
   const add = (mmdd, year, text) => {
-    const clean = stripHtml(text).replace(/^[:–—\-\s]+/, "").trim();
+    const clean = text.replace(/^[:–—\-\s]+/, "").trim();
     if (!clean || clean.length < 15) return;
     if (/massacre|holocaust|extermination|gas chamber|atrocity|executed|deported/i.test(clean)) {
       return;
@@ -57,40 +57,79 @@ function extractEntries(html, defaultYear) {
     }
   };
 
+  const prepared = html
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/\r?\n/g, " ")
+    .replace(/<(h[234]|li|dd|tr|p)[^>]*>/gi, "\n<$1>")
+    .replace(/<\/td>\s*<td[^>]*>/gi, " ")
+    .replace(/<\/ul>/gi, "\n[END_DATE]\n");
+
+  const lines = prepared.split(/\r?\n/);
   let curYear = defaultYear;
   let curMonth = null;
-  const blocks = html.split(/(?=<h[234]|<li|<tr)/i);
+  let activeMmDd = null;
 
-  for (const b of blocks) {
-    const ym = b.match(/<h[23][^>]*>[\s\S]*?\b(191[4-9]|1939|194[0-5])\b/i);
-    if (ym) curYear = Number(ym[1]);
-
-    const hm = b.match(new RegExp(`<h[234][^>]*>[\\s\\S]*?\\b${MONTH_RE}\\b`, "i"));
-    if (hm) curMonth = MONTHS[hm[1].toLowerCase()];
-
-    const mdy = b.match(new RegExp(`\\b${MONTH_RE}\\s+(\\d{1,2})\\b([\\s\\S]*)`, "i"));
-    if (mdy && curYear) {
-      const mm = MONTHS[mdy[1].toLowerCase()];
-      const dd = String(mdy[2]).padStart(2, "0");
-      const rest = mdy[3].split(/<\/li>|<\/p>|<\/tr>/i)[0];
-      add(`${mm}-${dd}`, curYear, rest);
+  for (const rawLine of lines) {
+    if (rawLine.includes("[END_DATE]")) {
+      activeMmDd = null;
       continue;
     }
 
-    const dmy = b.match(new RegExp(`\\b(\\d{1,2})\\s+${MONTH_RE}\\b([\\s\\S]*)`, "i"));
-    if (dmy && curYear) {
-      const mm = MONTHS[dmy[2].toLowerCase()];
-      const dd = String(dmy[1]).padStart(2, "0");
-      const rest = dmy[3].split(/<\/li>|<\/p>|<\/tr>/i)[0];
-      add(`${mm}-${dd}`, curYear, rest);
+    const isHeading = /^<h[234]>/i.test(rawLine);
+    const line = stripHtmlLine(rawLine);
+    if (!line) continue;
+
+    if (isHeading) {
+      activeMmDd = null;
+      const ym = line.match(/\b(191[4-9]|1939|194[0-5])\b/);
+      if (ym) curYear = Number(ym[1]);
+      const hm = line.match(new RegExp(`\\b${MONTH_RE}\\b`, "i"));
+      if (hm) curMonth = MONTHS[hm[1].toLowerCase()];
       continue;
     }
 
-    const dayOnly = b.match(/^<li[^>]*>\s*(?:<[^>]+>)*(\d{1,2})\s*[:–—-]\s*([\s\S]*)/i);
-    if (dayOnly && curYear && curMonth) {
-      const dd = String(dayOnly[1]).padStart(2, "0");
-      const rest = dayOnly[2].split(/<\/li>/i)[0];
-      add(`${curMonth}-${dd}`, curYear, rest);
+    // Match "November 22" or "1918 November 22" or "November 22, 1918: event..."
+    const mdy = line.match(
+      new RegExp(`^(?:(191[4-9]|1939|194[0-5])\\s+)?${MONTH_RE}\\s+(\\d{1,2})(?:,\\s*(191[4-9]|1939|194[0-5]))?\\b(.*)$`, "i")
+    );
+    if (mdy && (mdy[1] || mdy[4] || curYear)) {
+      const year = Number(mdy[1] || mdy[4] || curYear);
+      const mm = MONTHS[mdy[2].toLowerCase()];
+      const dd = String(mdy[3]).padStart(2, "0");
+      activeMmDd = `${mm}-${dd}`;
+      if (mdy[5].trim()) add(activeMmDd, year, mdy[5]);
+      continue;
+    }
+
+    // Match "22 November" or "1918 22 November"
+    const dmy = line.match(
+      new RegExp(`^(?:(191[4-9]|1939|194[0-5])\\s+)?(\\d{1,2})\\s+${MONTH_RE}(?:\\s+(191[4-9]|1939|194[0-5]))?\\b(.*)$`, "i")
+    );
+    if (dmy && (dmy[1] || dmy[4] || curYear)) {
+      const year = Number(dmy[1] || dmy[4] || curYear);
+      const mm = MONTHS[dmy[3].toLowerCase()];
+      const dd = String(dmy[2]).padStart(2, "0");
+      activeMmDd = `${mm}-${dd}`;
+      if (dmy[5].trim()) add(activeMmDd, year, dmy[5]);
+      continue;
+    }
+
+    // Match "22: event..." inside a month section
+    const dayColon = line.match(/^(\d{1,2})\s*[:–—-]\s*(.+)$/);
+    if (dayColon && curYear && curMonth) {
+      const ddNum = Number(dayColon[1]);
+      if (ddNum >= 1 && ddNum <= 31) {
+        const dd = String(ddNum).padStart(2, "0");
+        activeMmDd = `${curMonth}-${dd}`;
+        add(activeMmDd, curYear, dayColon[2]);
+        continue;
+      }
+    }
+
+    // Nested <li> under an active date heading (e.g., <li>22 November<ul><li>...</li></ul></li>)
+    if (activeMmDd && curYear && /^<li>/i.test(rawLine)) {
+      add(activeMmDd, curYear, line);
     }
   }
   return out;
@@ -115,8 +154,8 @@ async function main() {
   }
   fs.writeFileSync(path.join(dataDir, "ww2-by-date.json"), JSON.stringify(ww2, null, 2));
 
-  console.log("WW1 dates:", Object.keys(ww1).length, "Nov22:", (ww1["11-22"] || []).length);
-  console.log("WW2 dates:", Object.keys(ww2).length, "Nov22:", (ww2["11-22"] || []).length);
+  console.log("WW1 dates:", Object.keys(ww1).length, "Nov22:", JSON.stringify(ww1["11-22"] || []));
+  console.log("WW2 dates:", Object.keys(ww2).length, "Nov22:", JSON.stringify(ww2["11-22"] || []));
 }
 
 main().catch((err) => {
