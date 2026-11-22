@@ -7,6 +7,7 @@ import { LogoutButton } from "@/components/LogoutButton";
 import { NewsSection } from "@/components/NewsSection";
 import { TermSection } from "@/components/TermSection";
 import { ThinkSection } from "@/components/ThinkSection";
+import { WarTimelineCard } from "@/components/WarTimelineCard";
 import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/auth";
 import {
   fetchDailyChessPuzzle,
@@ -18,6 +19,7 @@ import { getDailyTerm, getDailyThinkPrompt } from "@/lib/dailyCurated";
 import { getDbClient } from "@/lib/db/client";
 import { loadDailyFeed } from "@/lib/feedService";
 import { createCorrelationId } from "@/lib/logger";
+import { getWarTimelineEntries, isWarEvent } from "@/lib/warTimelines";
 
 export const dynamic = "force-dynamic";
 
@@ -52,6 +54,8 @@ export default async function HomePage() {
   const dailyThink = getDailyThinkPrompt(feed.editionDate);
   const romanFact = getDailyRomanFact(feed.editionDate);
   const scientist = getScientistBornToday(feed.editionDate);
+  const warTimelines = getWarTimelineEntries(feed.editionDate);
+  const generalHistoryItems = feed.historyEvents.filter((item) => !isWarEvent(item));
 
   return (
     <div className="bg-sky-dots min-h-screen">
@@ -78,8 +82,20 @@ export default async function HomePage() {
 
         {/* 3. Today in History */}
         <HistorySection
-          items={feed.historyEvents}
+          items={generalHistoryItems}
           health={historyHealth}
+          editionDate={feed.editionDate}
+        />
+
+        {/* 3b & 3c. Today in WWI and Today in WWII (conditional) */}
+        <WarTimelineCard
+          variant="ww1"
+          entries={warTimelines.ww1}
+          editionDate={feed.editionDate}
+        />
+        <WarTimelineCard
+          variant="ww2"
+          entries={warTimelines.ww2}
           editionDate={feed.editionDate}
         />
 
@@ -102,7 +118,7 @@ export default async function HomePage() {
 
         {/* 8. Footer and grass strip */}
         <footer className="px-2 pt-1 text-center text-[13px] font-semibold text-ink">
-          History data: Wikimedia On this day (CC BY-SA). News: Haaretz RSS. Chess: Chess.com.
+          History, Roman facts and scientists: Wikipedia and Wikidata (CC BY-SA). News: Haaretz RSS. Chess: Chess.com.
         </footer>
 
         <svg
