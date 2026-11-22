@@ -10,6 +10,7 @@ import {
 } from "@/lib/ingestion/westernFilter";
 import { logEvent } from "@/lib/logger";
 import { sanitizeHttpUrl, sanitizePlainText, sha256Hex } from "@/lib/sanitize";
+import { isWarEvent } from "@/lib/warTimelines";
 
 export interface JerusalemDateParts {
   editionDate: string;
@@ -57,7 +58,7 @@ async function fetchWikimediaCandidates(
   day: string,
   timeoutMs: number
 ): Promise<RawHistoryCandidate[]> {
-  const url = `https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/${month}/${day}`;
+  const url = `https://en.wikipedia.org/api/rest_v1/feed/onthisday/selected/${month}/${day}`;
   const res = await fetch(url, {
     headers: {
       Accept: "application/json",
@@ -332,6 +333,25 @@ export async function ingestHistoryEvents(
   const seenKeys = new Set<string>();
   const scored: Array<{ candidate: RawHistoryCandidate; priority: number }> = [];
   for (const candidate of candidates) {
+    if (
+      isWarEvent({
+        id: "",
+        sourceId: candidate.sourceId,
+        sourceLabel: candidate.sourceLabel,
+        category: "history_events",
+        language: "en",
+        direction: "ltr",
+        title: candidate.title,
+        summary: candidate.summary,
+        externalUrl: candidate.externalUrl,
+        year: candidate.year,
+        publishedAt: "",
+        ingestedAt: "",
+        editionDate,
+      })
+    ) {
+      continue;
+    }
     const priority = getWesternHistoryPriority(
       `${candidate.title} ${candidate.summary}`,
       candidate.year
