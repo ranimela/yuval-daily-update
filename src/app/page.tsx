@@ -9,11 +9,12 @@ import { TermSection } from "@/components/TermSection";
 import { ThinkSection } from "@/components/ThinkSection";
 import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/auth";
 import {
-  getDailyExcuse,
-  getDailyTerm,
-  getDailyThinkPrompt,
-  getDailyUselessFact,
-} from "@/lib/dailyCurated";
+  fetchDailyChessPuzzle,
+  fetchDailyUselessFact,
+  getDailyRomanFact,
+  getScientistBornToday,
+} from "@/lib/bonusData";
+import { getDailyTerm, getDailyThinkPrompt } from "@/lib/dailyCurated";
 import { getDbClient } from "@/lib/db/client";
 import { loadDailyFeed } from "@/lib/feedService";
 import { createCorrelationId } from "@/lib/logger";
@@ -31,6 +32,11 @@ export default async function HomePage() {
   const sql = getDbClient();
   const feed = await loadDailyFeed(sql, correlationId);
 
+  const [dailyFact, chessPuzzle] = await Promise.all([
+    fetchDailyUselessFact(feed.editionDate),
+    fetchDailyChessPuzzle(),
+  ]);
+
   const historyHealth = feed.health.find((h) => h.category === "history_events");
   const newsHealth = feed.health.find((h) => h.category === "news_update");
 
@@ -44,8 +50,8 @@ export default async function HomePage() {
 
   const dailyTerm = getDailyTerm(feed.editionDate);
   const dailyThink = getDailyThinkPrompt(feed.editionDate);
-  const dailyFact = getDailyUselessFact(feed.editionDate);
-  const dailyExcuse = getDailyExcuse(feed.editionDate);
+  const romanFact = getDailyRomanFact(feed.editionDate);
+  const scientist = getScientistBornToday(feed.editionDate);
 
   return (
     <div className="bg-sky-dots min-h-screen">
@@ -87,11 +93,16 @@ export default async function HomePage() {
         <ThinkSection prompt={dailyThink} editionDate={feed.editionDate} />
 
         {/* 7. Bonus Round */}
-        <BonusRoundSection fact={dailyFact} excuse={dailyExcuse} />
+        <BonusRoundSection
+          fact={dailyFact}
+          romanFact={romanFact}
+          chessPuzzle={chessPuzzle}
+          scientist={scientist}
+        />
 
         {/* 8. Footer and grass strip */}
         <footer className="px-2 pt-1 text-center text-[13px] font-semibold text-ink">
-          History data: Wikimedia On this day (CC BY-SA). News: Haaretz RSS.
+          History data: Wikimedia On this day (CC BY-SA). News: Haaretz RSS. Chess: Chess.com.
         </footer>
 
         <svg

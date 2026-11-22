@@ -79,7 +79,7 @@ export const StarIcon = ({ size = 20 }: { size?: number }) => (
   </svg>
 );
 
-export const AlarmClockIcon = ({ size = 20 }: { size?: number }) => (
+export const TempleIcon = ({ size = 20 }: { size?: number }) => (
   <svg
     aria-hidden="true"
     width={size}
@@ -91,7 +91,38 @@ export const AlarmClockIcon = ({ size = 20 }: { size?: number }) => (
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <circle cx="12" cy="13" r="8" />
-    <path d="M12 9v4l3 2M5 3L2 6M19 3l3 3" />
+    <path d="M3 21h18M5 21V9M19 21V9M9 21V9M15 21V9M3 9h18L12 3z" />
+  </svg>
+);
+
+export const ChessPawnIcon = ({ size = 20 }: { size?: number }) => (
+  <svg
+    aria-hidden="true"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="#111111"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M9 3h6M12 3v3M8 21h8M9 21c0-4 1-6 3-8-2-1-3-3-3-5h6c0 2-1 4-3 5 2 2 3 4 3 8" />
+  </svg>
+);
+
+export const FlaskIcon = ({ size = 20 }: { size?: number }) => (
+  <svg
+    aria-hidden="true"
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="#111111"
+    strokeWidth="2.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3" />
   </svg>
 );

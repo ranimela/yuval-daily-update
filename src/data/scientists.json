@@ -1,0 +1,38 @@
+{
+  "11-22": {
+    "name": "Alan Stern",
+    "initials": "AS",
+    "field": "Planetary Science",
+    "year": 1957,
+    "country": "United States",
+    "blurb": "American engineer and planetary scientist who led NASA's New Horizons mission, giving humanity its first close-up images of Pluto.",
+    "wikipediaUrl": "https://en.wikipedia.org/wiki/Alan_Stern"
+  },
+  "11-21": {
+    "name": "Ernst Mach",
+    "initials": "EM",
+    "field": "Physics",
+    "year": 1838,
+    "country": "Austria",
+    "blurb": "Physicist who studied shock waves and supersonic speed—which is why speeds faster than sound are measured in Mach numbers.",
+    "wikipediaUrl": "https://en.wikipedia.org/wiki/Ernst_Mach"
+  },
+  "11-23": {
+    "name": "Henry Moseley",
+    "initials": "HM",
+    "field": "Physics",
+    "year": 1887,
+    "country": "United Kingdom",
+    "blurb": "English physicist who discovered how X-rays reveal each element's atomic number, fixing the order of the periodic table.",
+    "wikipediaUrl": "https://en.wikipedia.org/wiki/Henry_Moseley"
+  },
+  "12-09": {
+    "name": "Grace Hopper",
+    "initials": "GH",
+    "field": "Computer Science",
+    "year": 1906,
+    "country": "United States",
+    "blurb": "Computer scientist and Navy rear admiral who built the first compiler and helped create COBOL, making code look like English.",
+    "wikipediaUrl": "https://en.wikipedia.org/wiki/Grace_Hopper"
+  }
+}
