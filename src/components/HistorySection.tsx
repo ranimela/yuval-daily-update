@@ -121,7 +121,7 @@ export const HistorySection = ({ items, health, editionDate }: HistorySectionPro
               <li key={item.id} className="flex flex-col gap-3.5">
                 {idx > 0 ? <hr className="h-0 border-0 border-t-[3px] border-dashed border-ink" /> : null}
                 <div className="flex items-start gap-3">
-                  <span className="inline-flex shrink-0 -rotate-2 items-center rounded-[12px] bg-ink px-2.5 py-1 font-headline text-[22px] leading-none text-dose-yellow shadow-year">
+                  <span className="inline-flex min-w-[68px] shrink-0 -rotate-2 items-center justify-center rounded-[12px] bg-ink px-2.5 py-1 font-headline text-[22px] leading-none text-dose-yellow shadow-year">
                     {item.year ?? "—"}
                   </span>
                   <div className="min-w-0 flex-1">

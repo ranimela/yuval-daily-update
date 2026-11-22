@@ -54,7 +54,7 @@ export const WarTimelineCard = ({ variant, entries, editionDate }: WarTimelineCa
               {idx > 0 ? <hr className="h-0 border-0 border-t-[3px] border-dashed border-ink" /> : null}
               <div className="flex items-start gap-3">
                 <span
-                  className={`inline-flex shrink-0 -rotate-2 items-center rounded-[12px] bg-ink px-2.5 py-1 font-headline text-[22px] leading-none text-dose-yellow ${yearShadow}`}
+                  className={`inline-flex min-w-[68px] shrink-0 -rotate-2 items-center justify-center rounded-[12px] bg-ink px-2.5 py-1 font-headline text-[22px] leading-none text-dose-yellow ${yearShadow}`}
                 >
                   {entry.year}
                 </span>

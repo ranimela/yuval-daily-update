@@ -331,6 +331,7 @@ export async function ingestHistoryEvents(
   }
 
   const seenKeys = new Set<string>();
+  const seenPrimaryYears = new Set<number>();
   const scored: Array<{ candidate: RawHistoryCandidate; priority: number }> = [];
   for (const candidate of candidates) {
     if (
@@ -352,6 +353,13 @@ export async function ingestHistoryEvents(
     ) {
       continue;
     }
+    if (
+      candidate.sourceId !== "wikimedia" &&
+      candidate.year !== null &&
+      seenPrimaryYears.has(candidate.year)
+    ) {
+      continue;
+    }
     const priority = getWesternHistoryPriority(
       `${candidate.title} ${candidate.summary}`,
       candidate.year
@@ -364,6 +372,9 @@ export async function ingestHistoryEvents(
       continue;
     }
     seenKeys.add(dedupeKey);
+    if (candidate.sourceId === "wikimedia" && candidate.year !== null) {
+      seenPrimaryYears.add(candidate.year);
+    }
     scored.push({ candidate, priority });
   }
 
