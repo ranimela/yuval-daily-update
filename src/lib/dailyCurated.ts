@@ -1,3 +1,7 @@
+import mathTerms from "@/data/terms-math.json";
+import statsTerms from "@/data/terms-stats.json";
+import techTerms from "@/data/terms-tech.json";
+
 export interface DailyTerm {
   category: "Math" | "Stats" | "Tech";
   term: string;
@@ -15,128 +19,24 @@ export interface DailyThinkPrompt {
   deeperUrl: string;
 }
 
-const TERMS: DailyTerm[] = [
-  {
-    category: "Stats",
-    term: "Median",
-    definition: "The middle number when you line up all the values from smallest to largest.",
-    example: "Test scores: 3, 7, 9, 12, 100 — Median: 9 (Average: 26.2, dragged up by 100).",
-    whyItMatters: "The median ignores extreme values, so reports on things like income use it.",
-    detailUrl: "https://en.wikipedia.org/wiki/Median",
-  },
-  {
-    category: "Tech",
-    term: "Latency",
-    definition: "The delay between sending a request and getting the first response back.",
-    example: "Pressing a game button and seeing your character jump 40ms later.",
-    whyItMatters: "Low latency makes multiplayer games and video calls feel instant.",
-    detailUrl: "https://en.wikipedia.org/wiki/Latency_(engineering)",
-  },
-  {
-    category: "Math",
-    term: "Exponent",
-    definition: "A small number showing how many times to multiply a base number by itself.",
-    example: "2⁴ means 2 × 2 × 2 × 2 = 16.",
-    whyItMatters: "Exponents explain how populations, viral videos, and computer memory grow fast.",
-    detailUrl: "https://en.wikipedia.org/wiki/Exponentiation",
-  },
-  {
-    category: "Tech",
-    term: "Algorithm",
-    definition: "A clear step-by-step recipe a computer follows to solve a problem.",
-    example: "Binary search finds a word in a dictionary by splitting it in half each step.",
-    whyItMatters: "Smart algorithms turn hours of searching into milliseconds.",
-    detailUrl: "https://en.wikipedia.org/wiki/Algorithm",
-  },
-  {
-    category: "Stats",
-    term: "Outlier",
-    definition: "A data point that sits far away from all the other numbers in a group.",
-    example: "In heights 142, 145, 147, 148, and 210 cm, 210 cm is the outlier.",
-    whyItMatters: "One outlier can skew an average or signal an important discovery.",
-    detailUrl: "https://en.wikipedia.org/wiki/Outlier",
-  },
-  {
-    category: "Math",
-    term: "Prime Number",
-    definition: "A whole number greater than 1 that can only be divided evenly by 1 and itself.",
-    example: "2, 3, 5, 7, 11, and 13 are primes; 12 is not because 3 × 4 = 12.",
-    whyItMatters: "Huge prime numbers protect online passwords and banking encryption.",
-    detailUrl: "https://en.wikipedia.org/wiki/Prime_number",
-  },
-  {
-    category: "Tech",
-    term: "Cache",
-    definition: "A fast temporary storage spot that keeps copies of data you recently used.",
-    example: "Your browser saves a site's logo so it loads instantly on your next visit.",
-    whyItMatters: "Caching saves bandwidth and makes apps feel snappy.",
-    detailUrl: "https://en.wikipedia.org/wiki/Cache_(computing)",
-  },
-  {
-    category: "Stats",
-    term: "Probability",
-    definition: "A number between 0 and 1 (or 0% to 100%) measuring how likely an event is.",
-    example: "Flipping a fair coin gives Heads with probability 0.5 (50%).",
-    whyItMatters: "Weather forecasts, sports analytics, and games all run on probability.",
-    detailUrl: "https://en.wikipedia.org/wiki/Probability",
-  },
-  {
-    category: "Math",
-    term: "Fibonacci",
-    definition: "A sequence where each number is the sum of the two numbers right before it.",
-    example: "1, 1, 2, 3, 5, 8, 13, 21, 34...",
-    whyItMatters: "Fibonacci spirals show up in pinecones, sunflowers, and sea shells.",
-    detailUrl: "https://en.wikipedia.org/wiki/Fibonacci_sequence",
-  },
-  {
-    category: "Tech",
-    term: "Encryption",
-    definition: "Scrambling a message with a secret key so only authorized people can read it.",
-    example: "Turning 'HELLO' into 'KHOOR' by shifting each letter 3 spots.",
-    whyItMatters: "Encryption keeps your messages, passwords, and Wi-Fi private.",
-    detailUrl: "https://en.wikipedia.org/wiki/Encryption",
-  },
-  {
-    category: "Stats",
-    term: "Correlation",
-    definition: "When two things tend to move together—either up together or in opposite directions.",
-    example: "Ice cream sales and sunscreen sales both rise in summer.",
-    whyItMatters: "Two things moving together does not mean one caused the other!",
-    detailUrl: "https://en.wikipedia.org/wiki/Correlation",
-  },
-  {
-    category: "Math",
-    term: "Factorial",
-    definition: "Multiplying a whole number by every positive whole number smaller than it.",
-    example: "4! = 4 × 3 × 2 × 1 = 24 ways to line up 4 books.",
-    whyItMatters: "Factorials count how many ways cards, chess pieces, or passwords can be arranged.",
-    detailUrl: "https://en.wikipedia.org/wiki/Factorial",
-  },
-  {
-    category: "Tech",
-    term: "Bandwidth",
-    definition: "The maximum amount of data that can travel over a connection each second.",
-    example: "A 100 Mbps connection can download a large game much faster than 10 Mbps.",
-    whyItMatters: "High bandwidth lets multiple people stream video at the same time.",
-    detailUrl: "https://en.wikipedia.org/wiki/Bandwidth_(computing)",
-  },
-  {
-    category: "Stats",
-    term: "Sample Size",
-    definition: "How many items or people you actually measure out of a much bigger group.",
-    example: "Asking 1,000 students instead of all 100,000 students in a city.",
-    whyItMatters: "Too small a sample can give a misleading result by pure luck.",
-    detailUrl: "https://en.wikipedia.org/wiki/Sample_size_determination",
-  },
-  {
-    category: "Math",
-    term: "Ratio",
-    definition: "A comparison showing how much of one quantity there is compared to another.",
-    example: "A 2:1 ratio of flour to water means 2 cups of flour for every 1 cup of water.",
-    whyItMatters: "Cooking recipes, map scales, and screen resolutions all rely on ratios.",
-    detailUrl: "https://en.wikipedia.org/wiki/Ratio",
-  },
-];
+type RawTerm = Omit<DailyTerm, "category">;
+
+function buildInterleavedTerms(): DailyTerm[] {
+  const stats = statsTerms as RawTerm[];
+  const tech = techTerms as RawTerm[];
+  const math = mathTerms as RawTerm[];
+  const maxLen = Math.max(stats.length, tech.length, math.length);
+  const out: DailyTerm[] = [];
+
+  for (let i = 0; i < maxLen; i += 1) {
+    if (i < stats.length) out.push({ category: "Stats", ...stats[i] });
+    if (i < tech.length) out.push({ category: "Tech", ...tech[i] });
+    if (i < math.length) out.push({ category: "Math", ...math[i] });
+  }
+  return out;
+}
+
+const TERMS: DailyTerm[] = buildInterleavedTerms();
 
 const THINK_PROMPTS: DailyThinkPrompt[] = [
   {
