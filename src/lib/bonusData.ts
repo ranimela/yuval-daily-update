@@ -1,6 +1,6 @@
 import romanFacts from "@/data/roman-facts.json";
 import scientistsByDate from "@/data/scientists.json";
-import { getDailyUselessFact } from "@/lib/dailyCurated";
+import { getDailyUselessFact, getDayIndex } from "@/lib/dailyCurated";
 import { sanitizeHttpUrl, sanitizePlainText } from "@/lib/sanitize";
 
 export interface RomanFact {
@@ -45,17 +45,9 @@ function isKidAppropriate(text: string): boolean {
   return !UNSAFE_FACT_WORDS.some((w) => new RegExp(`\\b${w}\\b`, "i").test(lower));
 }
 
-function getDaySeed(editionDate: string): number {
-  let sum = 0;
-  for (let i = 0; i < editionDate.length; i += 1) {
-    sum = (sum * 31 + editionDate.charCodeAt(i)) >>> 0;
-  }
-  return sum;
-}
-
 export function getDailyRomanFact(editionDate: string): RomanFact {
   const list = romanFacts as RomanFact[];
-  return list[getDaySeed(editionDate) % list.length];
+  return list[getDayIndex(editionDate) % list.length];
 }
 
 export function getScientistBornToday(editionDate: string): ScientistEntry | null {
@@ -66,11 +58,14 @@ export function getScientistBornToday(editionDate: string): ScientistEntry | nul
 
 export async function fetchDailyUselessFact(editionDate: string): Promise<string> {
   try {
-    const res = await fetch("https://uselessfacts.jsph.pl/api/v2/facts/today?language=en", {
-      headers: { Accept: "application/json" },
-      signal: AbortSignal.timeout(4000),
-      next: { revalidate: 3600 },
-    });
+    const res = await fetch(
+      `https://uselessfacts.jsph.pl/api/v2/facts/random?language=en&edition=${editionDate}`,
+      {
+        headers: { Accept: "application/json" },
+        signal: AbortSignal.timeout(4000),
+        next: { revalidate: 86400 },
+      }
+    );
     if (!res.ok) {
       return getDailyUselessFact(editionDate);
     }
